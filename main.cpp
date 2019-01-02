@@ -57,7 +57,7 @@ public:
 		return m_nodes.size();
 	}
 
-	void printall() {
+	void PrintAll() {
 		for (auto &n : m_nodes)
 			std::cout << "key: " << n.first << " val: " << n.second << std::endl;
 	}
@@ -84,11 +84,11 @@ public:
 		return std::accumulate(m_rows.begin(), m_rows.end(), 0, [](auto s, auto n) { return s + n.second.size();});
 	}
 	
-	void printall() {
+	void PrintAll() {
 		std::cout << "main size " << m_rows.size() << std::endl;
 		for (auto &m : m_rows) {
 			std::cout << "key " << m.first << " size " << m.second.size() << std::endl;
-			m.second.printall();
+			m.second.PrintAll();
 		}
 	}
 
@@ -126,7 +126,7 @@ int main() {
 		std::cout << v[100] << std::endl;
 		v[200] = 30;
 		std::cout << v[0] << std::endl;
-		v.printall();
+		v.PrintAll();
 
 
 		Matrix<int, -2> m;
@@ -141,7 +141,7 @@ int main() {
 		m[3][4] = 10;
 		std::cout << m[3][4] << std::endl;
 		std::cout << "Matrix size:" << m.size() << std::endl;
-		m.printall();
+		m.PrintAll();
 
 	} catch(const std::exception &e) {
 		std::cerr << e.what() << std::endl;
