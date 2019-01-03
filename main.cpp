@@ -1,6 +1,8 @@
 #include <iostream>
 #include <map>
 #include <numeric>
+#include <sstream>
+#include <cassert>
 
 template<typename T, T Def, typename K = int>
 class Vector {
@@ -18,6 +20,8 @@ public:
 		};
 
 		Node& operator= (const T v) {
+			if (v == val)
+				return *this;
 			if (parent == nullptr) {
 				val = v;
 				return *this;
@@ -57,15 +61,18 @@ public:
 		return m_nodes.size();
 	}
 
-	void PrintAll() {
+	void PrintAll(const std::string &prefix = "") {
 		for (auto &n : m_nodes)
-			std::cout << "key: " << n.first << " val: " << n.second << std::endl;
+			std::cout << prefix << n.first << n.second << ' ';
 	}
 };
 
 template<typename T, T Def, typename X = int, typename Y = int, typename... Args>
 class Matrix {
-	std::map<Y, Vector<T, Def, X>> m_rows;
+public:
+	using ContType = std::map<Y, Vector<T, Def, X>>;
+private:
+	ContType m_rows;
 
 	class Vec : public Vector<T, Def, X> {
 		Matrix* parent;
@@ -74,7 +81,7 @@ class Matrix {
 		Vec(Matrix* p) : parent(p) {}
 
 		virtual typename Vector<T, Def, X>::Node& AddNode(const X key, const T val) override {
-			return parent->AddVector(ind).AddNode(key, val);
+			return parent->GetCont()[ind].AddNode(key, val);
 		}
 	} m_dummy_vec;
 public:
@@ -84,11 +91,12 @@ public:
 		return std::accumulate(m_rows.begin(), m_rows.end(), 0, [](auto s, auto n) { return s + n.second.size();});
 	}
 	
-	void PrintAll() {
-		std::cout << "main size " << m_rows.size() << std::endl;
+	void PrintAll(const std::string &prefix = "") {
 		for (auto &m : m_rows) {
-			std::cout << "key " << m.first << " size " << m.second.size() << std::endl;
-			m.second.PrintAll();
+			std::stringstream ss;
+			ss << m.first;
+			m.second.PrintAll(ss.str());
+			std::cout << std::endl;
 		}
 	}
 
@@ -101,48 +109,73 @@ public:
 		return it->second;
 	}
 
-	Vector<T, Def, X>& AddVector(const Y key) {
-		return m_rows[key];
+	virtual ContType& GetCont() {
+		return m_rows;
 	}
 };
 
-// template<typename T, T Def, typename X, typename Y, typename Key, typename... Args>
-// class Matrix<T, Def, X, Y, Key, Args...> {
-//     std::map<Key, Matrix<T, Def, X, Y, Args...>> nodes;
-// public:
-//     T get_box(int ind) {
-//         return 1;
-//     }
-//     void set_box(int ind, int val) {
-//     }
-// };
+template<typename T, T Def, typename X, typename Y, typename Key, typename... Args>
+class Matrix<T, Def, X, Y, Key, Args...> {
+public:
+	using MatrixType = Matrix<T, Def, X, Y, Args...>;
+	using ContType = std::map<Key, MatrixType>;
+private:
+	ContType m_nodes;
+
+	class Met : public MatrixType {
+		Matrix* parent;
+	public:
+		Key ind;
+		Met(Matrix* p) : parent(p) {}
+
+		virtual typename MatrixType::ContType& GetCont() override {
+			return parent->GetCont()[ind].GetCont();
+		}
+	} m_dummy_node;
+public:
+	Matrix() : m_dummy_node(this) {}
+
+	MatrixType& operator[] (const Y key) {
+		auto it = m_nodes.find(key);
+		if (it == m_nodes.end()) {
+			m_dummy_node.ind = key;
+			return m_dummy_node;
+		}
+		return it->second;
+	}
+
+	virtual ContType& GetCont() {
+		return m_nodes;
+	}
+};
 
 int main() {
 	try {
 
-		Vector<int, -5> v;
-		std::cout << v[100] << std::endl;
-		v[100] = 10;
-		std::cout << v[100] << std::endl;
-		v[200] = 30;
-		std::cout << v[0] << std::endl;
-		v.PrintAll();
+		{ // task script
+			Matrix<int, 0> m;
+			for (int i = 0; i < 10; ++i) {
+				m[i][i] = i;
+				m[9 - i][i] = i;
+			}
+			for (int i = 1; i < 9; ++i) {
+				for (int j = 1; j < 9; ++j)
+					std::cout << m[i][j] << ' ';
+				std::cout << std::endl;
+			}
+			std::cout << m.size() << std::endl;
+			m.PrintAll();
+		}
 
-
-		Matrix<int, -2> m;
-		std::cout << m[0][0] << std::endl;
-		std::cout << m[2][2] << std::endl;
-		m[2][2] = 5;
-		m[2][2] = 6;
-		std::cout << m[2][2] << std::endl;
-		std::cout << m[3][3] << std::endl;
-		m[3][3] = 9;
-		std::cout << m[3][3] << std::endl;
-		m[3][4] = 10;
-		std::cout << m[3][4] << std::endl;
-		std::cout << "Matrix size:" << m.size() << std::endl;
-		m.PrintAll();
-
+		{ // canonical form
+			Matrix<int, 0> m;
+			((m[100][100]  = 314) = 0) = 217;
+			assert(m[100][100] == 217);
+		}
+		{ // multidimensional matrix
+			Matrix<int, 0, int, int, int> m;
+			m[100][100][100] = 314;
+		}
 	} catch(const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 	}
