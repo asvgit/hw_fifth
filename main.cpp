@@ -11,9 +11,10 @@ public:
 		Vector* parent;
 		T val;
 		K ind;
+		bool is_dummy = false;
 
-		Node(Vector* p) : parent(p), val(Def) {}
-		Node(const T v) : parent(nullptr), val(v) {}
+		Node(Vector* p) : parent(p), val(Def), is_dummy(true) {}
+		Node(Vector* p, const T v, const K i) : parent(p), val(v), ind(i) {}
 
 		bool operator== (const T v) {
 			return val == v;
@@ -22,7 +23,10 @@ public:
 		Node& operator= (const T v) {
 			if (v == val)
 				return *this;
-			if (parent == nullptr) {
+			if (!is_dummy) {
+				if (v == Def) {
+					return parent->GetDummy(ind);
+				}
 				val = v;
 				return *this;
 			}
@@ -53,8 +57,14 @@ public:
 	}
 
 	virtual Node& AddNode(const K key, const T val) {
-		m_nodes.insert(std::make_pair(key, Node(val)));
+		m_nodes.insert(std::make_pair(key, Node(this, val, key)));
 		return m_nodes.at(key);
+	}
+
+	Node& GetDummy(K key) {
+		m_nodes.erase(key);
+		m_dummy_node.ind = key;
+		return m_dummy_node;
 	}
 
 	int size() {
@@ -184,7 +194,6 @@ int main() {
 			Matrix<int, 0, std::string, int, std::string, long, int, short> m;
 			m["100"][100]["100"][100][100][100] = 314;
 		}
-
 	} catch(const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 	}
