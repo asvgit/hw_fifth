@@ -67,7 +67,7 @@ public:
 	}
 };
 
-template<typename T, T Def, typename X = int, typename Y = int, typename... Args>
+template<typename T, T Def, typename Y = int, typename X = int, typename... Args>
 class Matrix {
 public:
 	using ContType = std::map<Y, Vector<T, Def, X>>;
@@ -77,7 +77,7 @@ private:
 	class Vec : public Vector<T, Def, X> {
 		Matrix* parent;
 	public:
-		X ind;
+		Y ind;
 		Vec(Matrix* p) : parent(p) {}
 
 		virtual typename Vector<T, Def, X>::Node& AddNode(const X key, const T val) override {
@@ -115,7 +115,7 @@ public:
 };
 
 template<typename T, T Def, typename X, typename Y, typename Key, typename... Args>
-class Matrix<T, Def, X, Y, Key, Args...> {
+class Matrix<T, Def, Key, X, Y, Args...> {
 public:
 	using MatrixType = Matrix<T, Def, X, Y, Args...>;
 	using ContType = std::map<Key, MatrixType>;
@@ -135,7 +135,7 @@ private:
 public:
 	Matrix() : m_dummy_node(this) {}
 
-	MatrixType& operator[] (const Y key) {
+	MatrixType& operator[] (const Key key) {
 		auto it = m_nodes.find(key);
 		if (it == m_nodes.end()) {
 			m_dummy_node.ind = key;
@@ -172,10 +172,19 @@ int main() {
 			((m[100][100]  = 314) = 0) = 217;
 			assert(m[100][100] == 217);
 		}
-		{ // multidimensional matrix
+		{ // multidimensional matrix (3)
 			Matrix<int, 0, int, int, int> m;
 			m[100][100][100] = 314;
 		}
+		{ // multidimensional matrix (4)
+			Matrix<int, 0, int, int, int, int> m;
+			m[100][100][100][100] = 314;
+		}
+		{ // multidimensional matrix (3+)
+			Matrix<int, 0, std::string, int, std::string, long, int, short> m;
+			m["100"][100]["100"][100][100][100] = 314;
+		}
+
 	} catch(const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 	}
